@@ -1,0 +1,17 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function owns(uid) { return signedIn() && request.auth.uid == uid; }
+    match /users/{uid}/chats/{chatId} {
+      allow read, create, update, delete: if owns(uid);
+    }
+    match /users/{uid}/profile/{document=**} {
+      allow read, write: if owns(uid);
+    }
+    // Usage, admin data and all unlisted collections are server-only.
+    match /usage/{uid} { allow read, write: if false; }
+    match /adminSettings/{document=**} { allow read, write: if false; }
+    match /{document=**} { allow read, write: if false; }
+  }
+}
